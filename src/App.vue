@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { useLanguage } from '@/hooks/useLanguage'
 
 const { theme, themeOverrides } = useTheme()
+
 const { language } = useLanguage()
 </script>
 
