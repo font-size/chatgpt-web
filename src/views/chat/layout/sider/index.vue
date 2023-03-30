@@ -71,17 +71,17 @@ watch(
       <main class="flex flex-col flex-1 min-h-0">
         <div class="p-4">
           <NButton dashed block @click="handleAdd">
-            New chat
+            New Game
           </NButton>
         </div>
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
-        <div class="p-4">
+        <!-- <div class="p-4">
           <NButton block @click="show = true">
             Prompt Store
           </NButton>
-        </div>
+        </div> -->
       </main>
       <Footer />
     </div>

@@ -40,18 +40,30 @@ const conversationList = computed(() => dataSources.value.filter(item => (!item.
 
 const prompt = ref<string>('')
 const loading = ref<boolean>(false)
+const humanGuess = ref<boolean>(false)
 
 // 添加PromptStore
 const promptStore = usePromptStore()
 // 使用storeToRefs，保证store修改后，联想部分能够重新渲染
 const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
 
+const humanGuessMessage = `我们来玩一个猜动物游戏，你随机选择一种常见动物，我可以问你问题，你回答是与不是，当我猜对时，你要回答“你猜对了！”，当我说“我投降了”，你则要告诉我你选择的动物。当我提问10次后还没有猜对时，你就结束游戏，并说告诉我正确答案。明白的话请说“我已经选了一种动物，请你开始猜吧”`;
+const aiGuessMessage = `我们来玩一个猜动物游戏，我随机选择一种常见动物，你可以一步步问我，我会回答你是或者不是。当你提问超过10次没有猜对时，就结束游戏，并说“我认输了”。请开始提问`;
+
 function handleSubmit() {
-  onConversation()
+  if (dataSources.value.length > 24) {
+    alert('游戏已结束，你可以点击左上角的“New game”按钮重新开始游戏')
+    return
+  }
+  if (dataSources.value.length === 0) {
+    onConversation(humanGuess ? humanGuessMessage: aiGuessMessage)
+  } else {
+    onConversation()
+  }
 }
 
-async function onConversation() {
-  let message = prompt.value
+async function onConversation(beginMessage = '') {
+  let message = beginMessage || prompt.value
 
   if (loading.value)
     return
@@ -475,7 +487,8 @@ onUnmounted(() => {
           <template v-if="!dataSources.length">
             <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
               <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
-              <span>Aha~</span>
+              <span>欢迎来到动物猜一猜！</span>
+              <span>这是一个猜动物游戏，你在心中想一个动物，然后让AI猜！AI会问各种问题，一步步缩小范围</span>
             </div>
           </template>
           <template v-else>
@@ -488,6 +501,7 @@ onUnmounted(() => {
                 :inversion="item.inversion"
                 :error="item.error"
                 :loading="item.loading"
+                :hidden="index === 0"
                 @regenerate="onRegenerate(index)"
                 @delete="handleDelete(index)"
               />
