@@ -26,6 +26,7 @@ export default {
     failed: '操作失败',
     verify: '验证',
     unauthorizedTips: '未经授权，请先进行验证。',
+    end: '此局游戏已结束，点击左上角的“New game”按钮重新开始新游戏',
   },
   chat: {
     placeholder: '来说点什么吧...（Shift + Enter = 换行）',

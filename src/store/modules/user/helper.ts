@@ -1,7 +1,7 @@
 import { ss } from '@/utils/storage'
 
 const LOCAL_NAME = 'userStorage'
-
+import defaultAvatar from '@/assets/avatar.jpg'
 export interface UserInfo {
   avatar: string
   name: string
@@ -15,7 +15,7 @@ export interface UserState {
 export function defaultSetting(): UserState {
   return {
     userInfo: {
-      avatar: 'http://ai.honestli.cn/img/avatar.jpg',
+      avatar: defaultAvatar,
       name: '大猩猩',
       description: 'Star on me>',
     },

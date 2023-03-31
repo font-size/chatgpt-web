@@ -26,6 +26,7 @@ export default {
     failed: 'Failed',
     verify: 'Verify',
     unauthorizedTips: 'Unauthorized, please verify first.',
+    end: 'This game has ended. Click the "New game" button in the upper left corner to restart the new game',
   },
   chat: {
     placeholder: 'Ask me anything...(Shift + Enter = line break)',

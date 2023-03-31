@@ -26,6 +26,7 @@ export default {
     failed: '操作失敗',
     verify: '驗證',
     unauthorizedTips: '未經授權，請先進行驗證。',
+    end: '此局遊戲已結束，點擊左上角的「New game」按鈕重新開始新遊戲',
   },
   chat: {
     placeholder: '來說點什麼...（Shift + Enter = 換行）',

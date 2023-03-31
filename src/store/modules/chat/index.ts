@@ -96,7 +96,7 @@ export const useChatStore = defineStore('chat-store', {
       if (!uuid || uuid === 0) {
         if (this.history.length === 0) {
           const uuid = Date.now()
-          this.history.push({ uuid, title: chat.text, isEdit: false })
+          this.history.push({ uuid, title: '动物猜猜乐', isEdit: false })
           this.chat.push({ uuid, data: [chat] })
           this.active = uuid
           this.recordState()
@@ -104,7 +104,7 @@ export const useChatStore = defineStore('chat-store', {
         else {
           this.chat[0].data.push(chat)
           if (this.history[0].title === 'New Game')
-            this.history[0].title = chat.text
+            this.history[0].title = '动物猜猜乐'
           this.recordState()
         }
       }
@@ -113,7 +113,7 @@ export const useChatStore = defineStore('chat-store', {
       if (index !== -1) {
         this.chat[index].data.push(chat)
         if (this.history[index].title === 'New Game')
-          this.history[index].title = chat.text
+          this.history[index].title = '动物猜猜乐'
         this.recordState()
       }
     },

@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { NAutoComplete, NButton, NInput, useDialog, useMessage } from 'naive-ui'
+import { NAutoComplete, NButton, NInput, useDialog, useMessage, NDivider, NCard, NList, NModal } from 'naive-ui'
 import html2canvas from 'html2canvas'
 import { Message } from './components'
 import { useScroll } from './hooks/useScroll'
@@ -15,6 +15,7 @@ import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
 import { t } from '@/locales'
+import GameType from './components/GameType/index.vue'
 
 let controller = new AbortController()
 
@@ -40,23 +41,72 @@ const conversationList = computed(() => dataSources.value.filter(item => (!item.
 
 const prompt = ref<string>('')
 const loading = ref<boolean>(false)
-const humanGuess = ref<boolean>(false)
+const showModal = ref<boolean>(false)
+// 人类提示词
+const humanPrompt = ref<string>('')
+// 谁猜 type 
+let humanGuess = false;
 
 // 添加PromptStore
 const promptStore = usePromptStore()
 // 使用storeToRefs，保证store修改后，联想部分能够重新渲染
 const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
 
-const humanGuessMessage = `我们来玩一个猜动物游戏，你随机选择一种常见动物，我可以问你问题，你回答是与不是，当我猜对时，你要回答“你猜对了！”，当我说“我投降了”，你则要告诉我你选择的动物。当我提问10次后还没有猜对时，你就结束游戏，并说告诉我正确答案。明白的话请说“我已经选了一种动物，请你开始猜吧”`;
-const aiGuessMessage = `我们来玩一个猜动物游戏，我随机选择一种常见动物，你可以一步步问我，我会回答你是或者不是。当你提问超过10次没有猜对时，就结束游戏，并说“我认输了”。请开始提问`;
+const humanGuessMessage = `我们来玩一个猜动物游戏！你随机选择一个常见动物，并向我提供有关该动物的简短描述。我可以问你一系列关于这个动物的问题，你会用“是”或“不是”回答我的每个问题，直到我猜出这个动物的身份，或者游戏达到最大提问次数。
+
+游戏最多提问20次。如果我在20次内猜出了这个动物的身份，游戏会结束。否则，游戏会在第20次提问后自动结束。
+
+例如，如果你选择的动物是“狗”，你可能会给出这样的描述：“这是一个哺乳动物，通常是人类的宠物，有时被用来进行警戒、工作或伴侣。”我可以问你：“这个动物通常是人类的宠物吗？”你会回答：“是。”或者我可以问你：“这个动物有羽毛吗？”你会回答：“不是。”
+
+现在，让我们开始游戏吧！请你随机选择一个常见的动物，并简短描述一下这个动物。`;
+
+const aiGuessMessage = `我们来玩一个猜动物游戏！我随机选择一个动物，并有可能向你提供有关该动物的简短描述。你可以问我一系列关于这个动物的问题，我可能会用“是”或“不是”回答你的每个问题，直到你猜出这个动物的身份，或者游戏达到最大提问次数。
+
+游戏最多提问20次。如果你在20次内猜出了这个动物的身份，游戏就会结束。否则，游戏会在第20次提问后自动结束并且你要说“我认输了”。
+
+例如，如果我选择的动物是“狗”，我可能会给出这样的描述：“这是一个哺乳动物，通常是人类的宠物，有时被用来进行警戒、工作或伴侣。”也可能不会给你任何描述。你可以问我：“这个动物通常是人类的宠物吗？”我会回答：“是。”或者你可以问我：“这个动物有羽毛吗？”我会回答：“不是。”
+
+现在，让我们开始游戏吧！我已经随机选择了一个动物,`;
+
+function showBeginModal(){
+  humanPrompt.value = '';
+  showModal.value = true;
+}
+
+function cancelCallback () {
+  showModal.value = false;
+}
+
+function  submitCallback () {
+  showModal.value = false;
+  handleSubmit();
+}
+
+function selectGameType(type: string) {
+  humanGuess = type === 'humanGuess';
+  console.log('humanGuess: ', humanGuess);
+  // 让ai猜的时候，需要一些提示词
+  if (humanGuess) {
+    handleSubmit();
+  } else {
+    showBeginModal();
+  }
+}
 
 function handleSubmit() {
-  if (dataSources.value.length > 24) {
-    alert('游戏已结束，你可以点击左上角的“New game”按钮重新开始游戏')
+  // if (!dataSources.value.length) return;
+  if (dataSources.value.length > 45) {
+    ms.warning(t('common.end'))
     return
   }
   if (dataSources.value.length === 0) {
-    onConversation(humanGuess ? humanGuessMessage: aiGuessMessage)
+    let message;
+    if (humanGuess) {
+      message = humanGuessMessage;
+    } else {
+      message = aiGuessMessage + humanPrompt.value + '。请问你猜得出这个动物的身份吗？你可以开始提问了！';
+    }
+    onConversation(message)
   } else {
     onConversation()
   }
@@ -445,7 +495,7 @@ const placeholder = computed(() => {
 })
 
 const buttonDisabled = computed(() => {
-  return loading.value || !prompt.value || prompt.value.trim() === ''
+  return loading.value || !prompt.value || prompt.value.trim() === '' || !dataSources.value.length;
 })
 
 const footerClass = computed(() => {
@@ -467,6 +517,40 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-col w-full h-full">
+      <NModal
+      v-model:show="showModal"
+      auto-focus
+    >
+      <NCard
+       style="max-width: 600px;width: 90%"
+      title="请给一些提示"
+      :bordered="false"
+      size="huge"
+      role="dialog"
+      aria-modal="true"
+      >
+      <template #footer>
+        <div class="flex justify-end">
+          <div class="pr-4">
+              <NButton  @click="cancelCallback">
+              取 消
+          </NButton>
+          </div>
+         <div>
+           <NButton type="success"  @click="submitCallback">
+              开 始
+          </NButton>
+         </div>
+        </div>
+      </template>
+      <n-input
+        v-model:value="humanPrompt"
+        type="textarea"
+        placeholder="选填，给AI一些提示词，例如“这是一个哺乳动物，通常是人类的宠物”"
+      />
+      </NCard>
+
+    </NModal>
     <HeaderComponent
       v-if="isMobile"
       :using-context="usingContext"
@@ -485,10 +569,21 @@ onUnmounted(() => {
           :class="[isMobile ? 'p-2' : 'p-4']"
         >
           <template v-if="!dataSources.length">
-            <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
-              <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
-              <span>欢迎来到动物猜一猜！</span>
-              <span>这是一个猜动物游戏，你在心中想一个动物，然后让AI猜！AI会问各种问题，一步步缩小范围</span>
+            <div class="flex flex-col items-center justify-center mt-4 text-center">
+              <h3 class="text-lg">动物猜一猜</h3>
+              <div class="text-gray-400">和人工智能一起玩游戏！</div>
+              <GameType type="aiGuess" icon="eos-icons:ai-healing-outlined"  title="模式一，AI来猜你" desc="你心中想一个动物，让AI来猜" @selectGameType="selectGameType"></GameType>
+              <GameType type="humanGuess" icon="mdi:face-man"  title="模式二，你来猜" desc="AI随机选择一个常见动物，你来猜" @selectGameType="selectGameType"></GameType>
+              <NDivider />
+             <div class="text-left">
+               <NCard title="游戏规则">
+                <NList>
+                  <div class="mt-2">1：在模式一，你随机选择一个动物，你提供有关该动物的简短描述或者不提供。AI会问你一系列关于这个动物的问题，你需要用“是”或“不是”回答AI的每个问题，直到AI猜出这个动物的身份，或者游戏达到最大提问次数。</div>
+                  <div class="mt-2">2：在模式二，AI会随机选择一个常见动物，并向你提供有关该动物的简短描述。你可以问AI一系列关于这个动物的问题，AI会用“是”或“不是”回答你的每个问题，直到你猜出这个动物的身份，或者游戏达到最大提问次数</div>
+                  <div class="mt-2">3：每局游戏最多问答20轮</div>
+                 </NList>
+              </NCard>
+             </div>
             </div>
           </template>
           <template v-else>
